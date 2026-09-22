@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mi Bingo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mi Bingo">
+<meta name="theme-color" content="#C43B2E">
+<link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Mi%20Bingo%22,%22short_name%22:%22Bingo%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23F8EFE2%22,%22theme_color%22:%22%23C43B2E%22}">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23C43B2E'/%3E%3Ctext x='50' y='68' font-size='58' font-family='Georgia,serif' font-weight='bold' fill='white' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F8EFE2; --card:#FFFDF9; --ink:#2B1B14; --ink-soft:#6B5A50;
+    --coral:#C43B2E; --coral-deep:#9E2E22; --rose:#F6D3CE;
+    --dauber:#5B3E8E; --dauber-soft:#EDE4F7; --line:#E4D6C4; --danger:#B23528;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#1A1310; --card:#241B16; --ink:#F3E9DD; --ink-soft:#BBA895;
+      --coral:#E2604F; --coral-deep:#C4483A; --rose:#4A2E2A;
+      --dauber:#9C7FD6; --dauber-soft:#33284A; --line:#3A2E26; --danger:#E2604F;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#1A1310; --card:#241B16; --ink:#F3E9DD; --ink-soft:#BBA895;
+    --coral:#E2604F; --coral-deep:#C4483A; --rose:#4A2E2A;
+    --dauber:#9C7FD6; --dauber-soft:#33284A; --line:#3A2E26; --danger:#E2604F;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Baloo 2', system-ui, -apple-system, Segoe UI, sans-serif;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+    -webkit-tap-highlight-color:transparent;
+    touch-action: manipulation;
+  }
+  #app{
+    max-width:480px; margin:0 auto; min-height:100%;
+    display:flex; flex-direction:column;
+    padding:16px 16px calc(96px + env(safe-area-inset-bottom,0px));
+  }
+  h1{font-size:1.5rem;margin:4px 0 2px;}
+  .sub{color:var(--ink-soft);font-size:0.9rem;margin:0 0 18px;}
+  button{font-family:inherit;border:none;cursor:pointer;}
+  .btn{
+    background:var(--coral); color:#fff; font-weight:700; font-size:1rem;
+    padding:13px 18px; border-radius:14px; text-align:center;
+  }
+  .btn:active{background:var(--coral-deep);}
+  .btn.secondary{background:transparent;color:var(--coral);border:2px solid var(--coral);}
+  .btn.block{width:100%;}
+  .icon-btn{
+    background:var(--card); color:var(--ink); border:1px solid var(--line);
+    border-radius:12px; width:42px;height:42px;
+    display:flex;align-items:center;justify-content:center; font-size:1.1rem; flex:none;
+  }
+  .topbar{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .topbar h1{flex:1;margin:0;}
+  .empty{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; color:var(--ink-soft); gap:14px; padding:40px 20px;
+  }
+  .empty .glyph{font-size:2.6rem;}
+  .fab{
+    position:fixed;
+    right:calc(18px + env(safe-area-inset-right,0px));
+    bottom:calc(20px + env(safe-area-inset-bottom,0px));
+    width:58px;height:58px;border-radius:50%;
+    background:var(--coral); color:#fff; font-size:1.8rem;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 18px rgba(0,0,0,.28); z-index:5;
+  }
+  .fab:active{background:var(--coral-deep);}
+  .card-block{
+    background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:14px; margin-bottom:20px; position:relative; overflow:hidden;
+  }
+  .card-block::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--coral);}
+  .card-block-head{display:flex;align-items:center;gap:8px;margin-bottom:4px;padding-left:6px;}
+  .card-block-head .serial{font-weight:800;font-size:1.1rem;flex:1;}
+  .card-block-head .icon-btn{width:38px;height:38px;font-size:0.95rem;}
+  .card-block .sub{margin:0 0 12px;padding-left:6px;}
+  .bingo-title{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:8px;}
+  .bingo-title span{
+    background:var(--coral); color:#fff; font-weight:800; font-size:1.2rem; text-align:center;
+    border-radius:50%; aspect-ratio:1; display:flex;align-items:center;justify-content:center;
+  }
+  .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:4px;}
+  .cell{aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.15rem;user-select:none;}
+  .cell.num{
+    background:var(--paper); border:1px solid var(--line); color:var(--ink);
+    transition:transform .12s ease, background .15s ease, color .15s ease;
+  }
+  .cell.num.marked{background:var(--dauber);color:#fff;border-color:var(--dauber);transform:scale(0.93);}
+  .cell.center{background:var(--rose);color:var(--ink);font-size:0.85rem;flex-direction:column;gap:2px;font-weight:700;}
+  .cell.center .tag{font-size:0.62rem;color:var(--ink-soft);font-weight:600;}
+  .cell input{
+    width:100%;height:100%;text-align:center;background:var(--card);
+    border:1px solid var(--line);border-radius:12px;font-family:inherit;
+    font-weight:700;font-size:1.05rem;color:var(--ink);-moz-appearance:textfield;
+  }
+  .cell input::-webkit-outer-spin-button,.cell input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .cell input:focus{outline:2px solid var(--coral);}
+  .cell.center input{background:var(--rose);font-size:0.9rem;}
+  .ranges{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:6px;}
+  .ranges span{text-align:center;font-size:0.68rem;color:var(--ink-soft);}
+  .form-error{color:var(--danger);font-size:0.85rem;margin:-4px 0 12px;min-height:1em;}
+  .actions{display:flex;gap:10px;margin-top:6px;}
+  .actions .btn{flex:1;}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:24px;z-index:20;}
+  .modal{background:var(--card);border-radius:16px;padding:20px;max-width:320px;width:100%;}
+  .modal p{margin:0 0 16px;font-size:0.95rem;}
+  .modal .actions{margin-top:0;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function(){
+  "use strict";
+  var STORAGE_KEY = "mi-bingo-cartones";
+  var COL_LETTERS = ["B","I","N","G","O"];
+  var COL_RANGES = [[1,15],[16,30],[31,45],[46,60],[61,75]];
+
+  var state = { cards: [] };
+  var view = { name: "list" };
+
+  function loadState(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){ state = JSON.parse(raw); }
+    }catch(e){ state = { cards: [] }; }
+    if(!state || !Array.isArray(state.cards)) state = { cards: [] };
+  }
+  function saveState(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){}
+  }
+
+  function emptyGrid(fill){
+    var g = [];
+    for(var r=0;r<5;r++){ g.push([fill,fill,fill,fill,fill]); }
+    return g;
+  }
+  function newDraft(){ return { numbers: emptyGrid(""), serial: "" }; }
+  var draft = newDraft();
+
+  function go(name, payload){ view = { name:name, payload:payload }; render(); window.scrollTo(0,0); }
+
+  function countMarked(card){
+    var n=0;
+    for(var r=0;r<5;r++) for(var c=0;c<5;c++){
+      if(r===2&&c===2) continue;
+      if(card.marked[r][c]) n++;
+    }
+    return n;
+  }
+
+  function render(){
+    var app = document.getElementById("app");
+    app.innerHTML = "";
+    if(view.name==="list") app.appendChild(renderList());
+    else if(view.name==="form") app.appendChild(renderForm());
+  }
+
+  function el(tag, cls, html){
+    var e = document.createElement(tag);
+    if(cls) e.className = cls;
+    if(html!==undefined) e.innerHTML = html;
+    return e;
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(ch){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];
+    });
+  }
+
+  function confirmDialog(message, confirmLabel, onConfirm){
+    var overlay = el("div","overlay");
+    var modal = el("div","modal");
+    modal.appendChild(el("p",null,escapeHtml(message)));
+    var actions = el("div","actions");
+    var cancel = el("button","btn secondary","Cancelar");
+    cancel.addEventListener("click", function(){ overlay.remove(); });
+    var ok = el("button","btn",escapeHtml(confirmLabel || "Confirmar"));
+    ok.addEventListener("click", function(){ overlay.remove(); onConfirm(); });
+    actions.appendChild(cancel);
+    actions.appendChild(ok);
+    modal.appendChild(actions);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+  }
+
+  function renderList(){
+    var wrap = el("div");
+    var top = el("div","topbar");
+    top.appendChild(el("h1",null,"Mi Bingo"));
+    wrap.appendChild(top);
+    wrap.appendChild(el("p","sub","Tus cartones, listos para jugar sin doblar nada."));
+
+    if(state.cards.length===0){
+      var empty = el("div","empty");
+      empty.appendChild(el("div","glyph","🎫"));
+      empty.appendChild(el("p",null,"Aún no tienes cartones.<br>Agrega el primero para empezar a jugar."));
+      var addBtn0 = el("button","btn","+ Agregar nueva tabla");
+      addBtn0.addEventListener("click", function(){ draft = newDraft(); go("form"); });
+      empty.appendChild(addBtn0);
+      wrap.appendChild(empty);
+    } else {
+      state.cards.forEach(function(card){
+        wrap.appendChild(renderCardBlock(card));
+      });
+    }
+
+    var fab = el("button","fab","+");
+    fab.setAttribute("aria-label","Agregar nueva tabla");
+    fab.addEventListener("click", function(){ draft = newDraft(); go("form"); });
+    wrap.appendChild(fab);
+
+    return wrap;
+  }
+
+  function renderCardBlock(card){
+    var block = el("div","card-block");
+    var head = el("div","card-block-head");
+    head.appendChild(el("span","serial", "Cartón " + escapeHtml(card.serial || "—")));
+
+    var resetBtn = el("button","icon-btn","↺");
+    resetBtn.setAttribute("aria-label","Reiniciar marcas");
+    resetBtn.addEventListener("click", function(){
+      confirmDialog("¿Quitar todas las marcas del cartón "+(card.serial||"")+" para empezar un juego nuevo?", "Reiniciar", function(){
+        card.marked = emptyGrid(false); saveState(); render();
+      });
+    });
+    var trashBtn = el("button","icon-btn","🗑");
+    trashBtn.setAttribute("aria-label","Eliminar cartón");
+    trashBtn.addEventListener("click", function(){
+      confirmDialog("¿Eliminar el cartón "+(card.serial||"")+"? Esta acción no se puede deshacer.", "Eliminar", function(){
+        state.cards = state.cards.filter(function(c){ return c.id!==card.id; });
+        saveState(); render();
+      });
+    });
+    head.appendChild(resetBtn);
+    head.appendChild(trashBtn);
+    block.appendChild(head);
+    block.appendChild(el("p","sub", countMarked(card)+" de 24 marcados"));
+
+    var title = el("div","bingo-title");
+    COL_LETTERS.forEach(function(l){ title.appendChild(el("span",null,l)); });
+    block.appendChild(title);
+
+    var grid = el("div","grid");
+    for(var r=0;r<5;r++){
+      for(var c=0;c<5;c++){
+        if(r===2 && c===2){
+          var cell = el("div","cell center");
+          cell.appendChild(el("span","tag","N° SERIE"));
+          cell.appendChild(el("span",null, escapeHtml(card.serial || "—")));
+          grid.appendChild(cell);
+        } else {
+          (function(rr,cc){
+            var marked = card.marked[rr][cc];
+            var num = card.numbers[rr][cc];
+            var cell = el("div","cell num"+(marked?" marked":""), escapeHtml(String(num)));
+            cell.addEventListener("click", function(){
+              card.marked[rr][cc] = !card.marked[rr][cc];
+              saveState();
+              render();
+            });
+            grid.appendChild(cell);
+          })(r,c);
+        }
+      }
+    }
+    block.appendChild(grid);
+    return block;
+  }
+
+  function renderForm(){
+    var wrap = el("div");
+    var top = el("div","topbar");
+    var back = el("button","icon-btn","←");
+    back.addEventListener("click", function(){ go("list"); });
+    top.appendChild(back);
+    top.appendChild(el("h1",null,"Nueva tabla"));
+    wrap.appendChild(top);
+    wrap.appendChild(el("p","sub","Ingresa los números de tu cartón, columna por columna."));
+
+    var title = el("div","bingo-title");
+    COL_LETTERS.forEach(function(l){ title.appendChild(el("span",null,l)); });
+    wrap.appendChild(title);
+
+    var ranges = el("div","ranges");
+    COL_RANGES.forEach(function(r){ ranges.appendChild(el("span",null,r[0]+"–"+r[1])); });
+    wrap.appendChild(ranges);
+
+    var grid = el("div","grid");
+    for(var r=0;r<5;r++){
+      for(var c=0;c<5;c++){
+        if(r===2 && c===2){
+          var cell = el("div","cell center");
+          var input = document.createElement("input");
+          input.type = "text"; input.maxLength = 8; input.placeholder = "N° serie";
+          input.value = draft.serial;
+          input.addEventListener("input", function(e){ draft.serial = e.target.value; });
+          cell.appendChild(input);
+          grid.appendChild(cell);
+        } else {
+          (function(rr,cc){
+            var cell = el("div","cell num");
+            cell.style.background = "transparent"; cell.style.border = "none";
+            var input = document.createElement("input");
+            input.type = "number"; input.inputMode = "numeric";
+            input.value = draft.numbers[rr][cc];
+            input.addEventListener("input", function(e){ draft.numbers[rr][cc] = e.target.value; });
+            cell.appendChild(input);
+            grid.appendChild(cell);
+          })(r,c);
+        }
+      }
+    }
+    wrap.appendChild(grid);
+
+    var errorBox = el("div","form-error","");
+    wrap.appendChild(errorBox);
+
+    var actions = el("div","actions");
+    var cancel = el("button","btn secondary","Cancelar");
+    cancel.addEventListener("click", function(){ go("list"); });
+    var save = el("button","btn","Guardar cartón");
+    save.addEventListener("click", function(){
+      for(var r=0;r<5;r++) for(var c=0;c<5;c++){
+        if(r===2&&c===2) continue;
+        if(draft.numbers[r][c]==="" || draft.numbers[r][c]===null || draft.numbers[r][c]===undefined){
+          errorBox.textContent = "Completa las 24 casillas de números antes de guardar.";
+          return;
+        }
+      }
+      var card = {
+        id: "c" + Date.now() + Math.floor(Math.random()*1000),
+        serial: draft.serial.trim(),
+        numbers: draft.numbers.map(function(row){ return row.slice(); }),
+        marked: emptyGrid(false)
+      };
+      state.cards.push(card);
+      saveState();
+      go("list");
+    });
+    actions.appendChild(cancel);
+    actions.appendChild(save);
+    wrap.appendChild(actions);
+
+    return wrap;
+  }
+
+  loadState();
+  render();
+})();
+</script>
+</body>
+</html>
