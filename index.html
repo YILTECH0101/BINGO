@@ -129,6 +129,7 @@
   .modal{background:var(--card);border-radius:16px;padding:20px;max-width:320px;width:100%;text-align:center;}
   .modal p{margin:0 0 16px;font-size:1.05rem;font-weight:700;}
   .modal .actions{margin-top:0;justify-content:center;}
+  .voice-controls{display:flex;gap:8px;margin-bottom:12px;}
 </style>
 </head>
 <body>
@@ -194,7 +195,6 @@
     });
   }
 
-  // Modal genérico para diálogos
   function confirmDialog(message, confirmLabel, onConfirm){
     var overlay = el("div","overlay");
     var modal = el("div","modal");
@@ -211,28 +211,17 @@
     document.body.appendChild(overlay);
   }
 
-  // Modal especial con botón Verde y X para los números
   function confirmNumberDialog(number, isMarked, onConfirm){
     var overlay = el("div","overlay");
     var modal = el("div","modal");
-    
-    var msg = isMarked ? 
-      "¿Desmarcar el número " + number + "?" : 
-      "¿Marcar el número " + number + "?";
-      
+    var msg = isMarked ? "¿Desmarcar el número " + number + "?" : "¿Marcar el número " + number + "?";
     modal.appendChild(el("p", null, escapeHtml(msg)));
-    
     var actions = el("div","actions");
-    
-    // Botón X para cancelar
     var cancel = el("button","btn cancel-icon","✕");
     cancel.setAttribute("aria-label","Cancelar");
     cancel.addEventListener("click", function(){ overlay.remove(); });
-    
-    // Botón verde para confirmar
     var ok = el("button","btn success","Confirmar");
     ok.addEventListener("click", function(){ overlay.remove(); onConfirm(); });
-    
     actions.appendChild(cancel);
     actions.appendChild(ok);
     modal.appendChild(actions);
@@ -312,7 +301,6 @@
             var num = card.numbers[rr][cc];
             var cell = el("div","cell num"+(marked?" marked":""), escapeHtml(String(num)));
             
-            // Confirmación con ventana emergente al hacer clic
             cell.addEventListener("click", function(){
               confirmNumberDialog(num, card.marked[rr][cc], function(){
                 card.marked[rr][cc] = !card.marked[rr][cc];
@@ -338,7 +326,56 @@
     top.appendChild(back);
     top.appendChild(el("h1",null,"Nueva tabla"));
     wrap.appendChild(top);
-    wrap.appendChild(el("p","sub","Ingresa los números de tu cartón, columna por columna."));
+    wrap.appendChild(el("p","sub","Ingresa los números manualmente o dicta por voz."));
+
+    var voiceControls = el("div","voice-controls");
+    var dictBtn = el("button","btn secondary block","🎙️ Dictar números por voz");
+    
+    // Función de Reconocimiento de Voz
+    dictBtn.addEventListener("click", function(){
+      var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("El dictado por voz no está soportado en este navegador.");
+        return;
+      }
+      
+      var recognition = new SpeechRecognition();
+      recognition.lang = 'es-ES';
+      recognition.interimResults = false;
+      dictBtn.textContent = "🔊 Escuchando... Di los números";
+
+      recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript;
+        var foundNumbers = transcript.match(/\d+/g);
+        
+        if (foundNumbers) {
+          var idx = 0;
+          for (var r = 0; r < 5; r++) {
+            for (var c = 0; c < 5; c++) {
+              if (r === 2 && c === 2) continue;
+              if (idx < foundNumbers.length) {
+                draft.numbers[r][c] = foundNumbers[idx];
+                idx++;
+              }
+            }
+          }
+          render();
+        } else {
+          alert("No se reconocieron números. Intenta dictar nuevamente.");
+          dictBtn.textContent = "🎙️ Dictar números por voz";
+        }
+      };
+
+      recognition.onerror = function() {
+        alert("Error al acceder al micrófono.");
+        dictBtn.textContent = "🎙️ Dictar números por voz";
+      };
+
+      recognition.start();
+    });
+
+    voiceControls.appendChild(dictBtn);
+    wrap.appendChild(voiceControls);
 
     var title = el("div","bingo-title");
     COL_LETTERS.forEach(function(l){ title.appendChild(el("span",null,l)); });
