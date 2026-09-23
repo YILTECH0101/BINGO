@@ -19,18 +19,21 @@
     --paper:#F8EFE2; --card:#FFFDF9; --ink:#2B1B14; --ink-soft:#6B5A50;
     --coral:#C43B2E; --coral-deep:#9E2E22; --rose:#F6D3CE;
     --dauber:#5B3E8E; --dauber-soft:#EDE4F7; --line:#E4D6C4; --danger:#B23528;
+    --success:#2E7D32; --success-deep:#1B5E20;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --paper:#1A1310; --card:#241B16; --ink:#F3E9DD; --ink-soft:#BBA895;
       --coral:#E2604F; --coral-deep:#C4483A; --rose:#4A2E2A;
       --dauber:#9C7FD6; --dauber-soft:#33284A; --line:#3A2E26; --danger:#E2604F;
+      --success:#4CAF50; --success-deep:#388E3C;
     }
   }
   :root[data-theme="dark"]{
     --paper:#1A1310; --card:#241B16; --ink:#F3E9DD; --ink-soft:#BBA895;
     --coral:#E2604F; --coral-deep:#C4483A; --rose:#4A2E2A;
     --dauber:#9C7FD6; --dauber-soft:#33284A; --line:#3A2E26; --danger:#E2604F;
+    --success:#4CAF50; --success-deep:#388E3C;
   }
   *{box-sizing:border-box;}
   html{scroll-padding-top:env(safe-area-inset-top,0px);}
@@ -57,6 +60,12 @@
   }
   .btn:active{background:var(--coral-deep);}
   .btn.secondary{background:transparent;color:var(--coral);border:2px solid var(--coral);}
+  .btn.success{background:var(--success);color:#fff;}
+  .btn.success:active{background:var(--success-deep);}
+  .btn.cancel-icon{
+    background:transparent; color:var(--ink-soft); border:2px solid var(--line);
+    font-size:1.2rem; font-weight:800; padding:10px 18px; border-radius:14px;
+  }
   .btn.block{width:100%;}
   .icon-btn{
     background:var(--card); color:var(--ink); border:1px solid var(--line);
@@ -117,9 +126,9 @@
   .actions{display:flex;gap:10px;margin-top:6px;}
   .actions .btn{flex:1;}
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:24px;z-index:20;}
-  .modal{background:var(--card);border-radius:16px;padding:20px;max-width:320px;width:100%;}
-  .modal p{margin:0 0 16px;font-size:0.95rem;}
-  .modal .actions{margin-top:0;}
+  .modal{background:var(--card);border-radius:16px;padding:20px;max-width:320px;width:100%;text-align:center;}
+  .modal p{margin:0 0 16px;font-size:1.05rem;font-weight:700;}
+  .modal .actions{margin-top:0;justify-content:center;}
 </style>
 </head>
 <body>
@@ -185,6 +194,7 @@
     });
   }
 
+  // Modal genérico para diálogos
   function confirmDialog(message, confirmLabel, onConfirm){
     var overlay = el("div","overlay");
     var modal = el("div","modal");
@@ -194,6 +204,35 @@
     cancel.addEventListener("click", function(){ overlay.remove(); });
     var ok = el("button","btn",escapeHtml(confirmLabel || "Confirmar"));
     ok.addEventListener("click", function(){ overlay.remove(); onConfirm(); });
+    actions.appendChild(cancel);
+    actions.appendChild(ok);
+    modal.appendChild(actions);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+  }
+
+  // Modal especial con botón Verde y X para los números
+  function confirmNumberDialog(number, isMarked, onConfirm){
+    var overlay = el("div","overlay");
+    var modal = el("div","modal");
+    
+    var msg = isMarked ? 
+      "¿Desmarcar el número " + number + "?" : 
+      "¿Marcar el número " + number + "?";
+      
+    modal.appendChild(el("p", null, escapeHtml(msg)));
+    
+    var actions = el("div","actions");
+    
+    // Botón X para cancelar
+    var cancel = el("button","btn cancel-icon","✕");
+    cancel.setAttribute("aria-label","Cancelar");
+    cancel.addEventListener("click", function(){ overlay.remove(); });
+    
+    // Botón verde para confirmar
+    var ok = el("button","btn success","Confirmar");
+    ok.addEventListener("click", function(){ overlay.remove(); onConfirm(); });
+    
     actions.appendChild(cancel);
     actions.appendChild(ok);
     modal.appendChild(actions);
@@ -272,11 +311,16 @@
             var marked = card.marked[rr][cc];
             var num = card.numbers[rr][cc];
             var cell = el("div","cell num"+(marked?" marked":""), escapeHtml(String(num)));
+            
+            // Confirmación con ventana emergente al hacer clic
             cell.addEventListener("click", function(){
-              card.marked[rr][cc] = !card.marked[rr][cc];
-              saveState();
-              render();
+              confirmNumberDialog(num, card.marked[rr][cc], function(){
+                card.marked[rr][cc] = !card.marked[rr][cc];
+                saveState();
+                render();
+              });
             });
+            
             grid.appendChild(cell);
           })(r,c);
         }
