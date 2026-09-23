@@ -125,11 +125,33 @@
   .form-error{color:var(--danger);font-size:0.85rem;margin:-4px 0 12px;min-height:1em;}
   .actions{display:flex;gap:10px;margin-top:6px;}
   .actions .btn{flex:1;}
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:24px;z-index:20;}
-  .modal{background:var(--card);border-radius:16px;padding:20px;max-width:320px;width:100%;text-align:center;}
-  .modal p{margin:0 0 16px;font-size:1.05rem;font-weight:700;}
+  
+  /* OVERLAY Y MODAL RESALTADOS */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;padding:24px;z-index:20;backdrop-filter:blur(2px);}
+  .modal{
+    background:var(--card);
+    border-radius:20px;
+    padding:24px;
+    max-width:320px;
+    width:100%;
+    text-align:center;
+    border:2px solid var(--coral);
+    box-shadow:0 10px 30px rgba(0,0,0,0.4);
+  }
+  .modal .modal-title{
+    margin:0 0 18px;
+    font-size:1.35rem;
+    font-weight:800;
+    color:var(--ink);
+  }
+  .modal .modal-num{
+    font-size:2.2rem;
+    font-weight:800;
+    color:var(--coral);
+    display:inline-block;
+    padding:0 6px;
+  }
   .modal .actions{margin-top:0;justify-content:center;}
-  .voice-controls{display:flex;gap:8px;margin-bottom:12px;}
 </style>
 </head>
 <body>
@@ -198,7 +220,7 @@
   function confirmDialog(message, confirmLabel, onConfirm){
     var overlay = el("div","overlay");
     var modal = el("div","modal");
-    modal.appendChild(el("p",null,escapeHtml(message)));
+    modal.appendChild(el("div","modal-title",escapeHtml(message)));
     var actions = el("div","actions");
     var cancel = el("button","btn secondary","Cancelar");
     cancel.addEventListener("click", function(){ overlay.remove(); });
@@ -211,17 +233,28 @@
     document.body.appendChild(overlay);
   }
 
+  // VENTANA EMERGENTE MODIFICADA (Texto exacto y número grande resaltado)
   function confirmNumberDialog(number, isMarked, onConfirm){
     var overlay = el("div","overlay");
     var modal = el("div","modal");
-    var msg = isMarked ? "¿Desmarcar el número " + number + "?" : "¿Marcar el número " + number + "?";
-    modal.appendChild(el("p", null, escapeHtml(msg)));
+    
+    var actionText = isMarked ? "Desmarcar " : "Marcar ";
+    var titleBox = el("div","modal-title");
+    titleBox.appendChild(document.createTextNode(actionText));
+    
+    var numSpan = el("span","modal-num", escapeHtml(String(number)));
+    titleBox.appendChild(numSpan);
+    
+    modal.appendChild(titleBox);
+    
     var actions = el("div","actions");
     var cancel = el("button","btn cancel-icon","✕");
     cancel.setAttribute("aria-label","Cancelar");
     cancel.addEventListener("click", function(){ overlay.remove(); });
+    
     var ok = el("button","btn success","Confirmar");
     ok.addEventListener("click", function(){ overlay.remove(); onConfirm(); });
+    
     actions.appendChild(cancel);
     actions.appendChild(ok);
     modal.appendChild(actions);
@@ -326,56 +359,7 @@
     top.appendChild(back);
     top.appendChild(el("h1",null,"Nueva tabla"));
     wrap.appendChild(top);
-    wrap.appendChild(el("p","sub","Ingresa los números manualmente o dicta por voz."));
-
-    var voiceControls = el("div","voice-controls");
-    var dictBtn = el("button","btn secondary block","🎙️ Dictar números por voz");
-    
-    // Función de Reconocimiento de Voz
-    dictBtn.addEventListener("click", function(){
-      var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        alert("El dictado por voz no está soportado en este navegador.");
-        return;
-      }
-      
-      var recognition = new SpeechRecognition();
-      recognition.lang = 'es-ES';
-      recognition.interimResults = false;
-      dictBtn.textContent = "🔊 Escuchando... Di los números";
-
-      recognition.onresult = function(event) {
-        var transcript = event.results[0][0].transcript;
-        var foundNumbers = transcript.match(/\d+/g);
-        
-        if (foundNumbers) {
-          var idx = 0;
-          for (var r = 0; r < 5; r++) {
-            for (var c = 0; c < 5; c++) {
-              if (r === 2 && c === 2) continue;
-              if (idx < foundNumbers.length) {
-                draft.numbers[r][c] = foundNumbers[idx];
-                idx++;
-              }
-            }
-          }
-          render();
-        } else {
-          alert("No se reconocieron números. Intenta dictar nuevamente.");
-          dictBtn.textContent = "🎙️ Dictar números por voz";
-        }
-      };
-
-      recognition.onerror = function() {
-        alert("Error al acceder al micrófono.");
-        dictBtn.textContent = "🎙️ Dictar números por voz";
-      };
-
-      recognition.start();
-    });
-
-    voiceControls.appendChild(dictBtn);
-    wrap.appendChild(voiceControls);
+    wrap.appendChild(el("p","sub","Ingresa los números de tu cartón, columna por columna."));
 
     var title = el("div","bingo-title");
     COL_LETTERS.forEach(function(l){ title.appendChild(el("span",null,l)); });
